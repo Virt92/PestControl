@@ -11,6 +11,7 @@ import { VISIT_TYPE_LABELS } from '@/types'
 import type { VisitType } from '@/types'
 import StatCard from '@/components/ui/StatCard.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
+import ActivityChart from '@/components/charts/ActivityChart.vue'
 
 const router = useRouter()
 const clientsStore = useClientsStore()
@@ -106,6 +107,11 @@ function formatDate(iso: string): string {
         icon="🔔"
         color="red"
       />
+    </div>
+
+    <!-- Activity Chart -->
+    <div v-if="monitoringStore.checks.length > 0" class="mb-8">
+      <ActivityChart :checks="monitoringStore.checks" title="Динаміка активності шкідників" />
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

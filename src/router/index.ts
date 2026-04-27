@@ -69,6 +69,18 @@ export const router = createRouter({
       name: 'notifications',
       component: () => import('@/views/NotificationsView.vue'),
       meta: { title: 'Повідомлення' }
+    },
+    {
+      path: '/plans',
+      name: 'plans',
+      component: () => import('@/views/ServicePlansView.vue'),
+      meta: { title: 'Плани обслуговування' }
+    },
+    {
+      path: '/portal',
+      name: 'portal',
+      component: () => import('@/views/ClientPortalView.vue'),
+      meta: { title: 'Клієнтський кабінет' }
     }
   ]
 })

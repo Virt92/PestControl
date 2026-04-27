@@ -12,6 +12,8 @@ import BaseModal from '@/components/ui/BaseModal.vue'
 import FormField from '@/components/ui/FormField.vue'
 import PointFormModal from '@/components/monitoring/PointFormModal.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import QRCodeDisplay from '@/components/monitoring/QRCodeDisplay.vue'
+import ActivityChart from '@/components/charts/ActivityChart.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -35,8 +37,27 @@ const checkForm = ref({
   pestType: '',
   equipmentStatus: 'good',
   correctiveAction: '',
-  notes: ''
+  notes: '',
+  photos: [] as string[]
 })
+
+function onPhotoSelect(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = input.files
+  if (!files) return
+  Array.from(files).forEach(file => {
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const result = ev.target?.result as string
+      if (result) checkForm.value.photos.push(result)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+function removePhoto(index: number) {
+  checkForm.value.photos.splice(index, 1)
+}
 
 const checkColumns = [
   { key: 'checkedAt', label: 'Дата' },
@@ -64,7 +85,8 @@ function openCheckForm() {
     activity: false, activityLevel: 0,
     consumptionPercent: null, consumptionGrams: null,
     pestType: '', equipmentStatus: 'good',
-    correctiveAction: '', notes: ''
+    correctiveAction: '', notes: '',
+    photos: []
   }
   showCheckForm.value = true
 }
@@ -80,7 +102,7 @@ function submitCheck() {
     consumptionPercent: checkForm.value.consumptionPercent,
     consumptionGrams: checkForm.value.consumptionGrams,
     pestType: checkForm.value.pestType,
-    photos: [],
+    photos: checkForm.value.photos,
     correctiveAction: checkForm.value.correctiveAction,
     equipmentStatus: checkForm.value.equipmentStatus,
     notes: checkForm.value.notes,
@@ -187,6 +209,9 @@ function formatDate(iso: string | null): string {
       </div>
 
       <div class="space-y-4">
+        <div class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center">
+          <QRCodeDisplay :tag-id="point.tagId" :size="140" />
+        </div>
         <div class="bg-white rounded-xl border border-gray-200 p-5 text-center">
           <p class="text-3xl font-bold text-blue-600">{{ checks.length }}</p>
           <p class="text-sm text-gray-500 mt-1">Перевірок</p>
@@ -196,6 +221,10 @@ function formatDate(iso: string | null): string {
           <p class="text-sm text-gray-500 mt-1">З активністю</p>
         </div>
       </div>
+    </div>
+
+    <div v-if="checks.length > 0" class="mb-6">
+      <ActivityChart :checks="checks" title="Динаміка активності" />
     </div>
 
     <h2 class="text-lg font-semibold text-gray-900 mb-4">Історія перевірок</h2>
@@ -309,6 +338,27 @@ function formatDate(iso: string | null): string {
             rows="2"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
           />
+        </FormField>
+
+        <FormField label="Фото">
+          <div class="flex flex-wrap gap-2 mb-2">
+            <div v-for="(photo, idx) in checkForm.photos" :key="idx" class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+              <img :src="photo" class="w-full h-full object-cover" />
+              <button
+                type="button"
+                class="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center"
+                @click="removePhoto(idx)"
+              >x</button>
+            </div>
+          </div>
+          <label class="inline-flex items-center gap-2 px-3 py-2 text-sm text-blue-600 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Додати фото
+            <input type="file" accept="image/*" multiple class="hidden" @change="onPhotoSelect" />
+          </label>
         </FormField>
       </form>
 

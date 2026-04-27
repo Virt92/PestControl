@@ -13,6 +13,8 @@ const navItems = [
   { to: '/visits', icon: '🚗', label: 'Виїзди', match: '/visits' },
   { to: '/monitoring', icon: '📍', label: 'Моніторинг', match: '/monitoring' },
   { to: '/documents', icon: '📄', label: 'Документи', match: '/documents' },
+  { to: '/plans', icon: '📋', label: 'Плани', match: '/plans' },
+  { to: '/portal', icon: '🏠', label: 'Кабінет клієнта', match: '/portal' },
   { to: '/notifications', icon: '🔔', label: 'Повідомлення', match: '/notifications' }
 ]
 
