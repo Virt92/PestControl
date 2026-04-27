@@ -1,51 +1,45 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Client, ClientType, ClientStatus } from '@/types'
-
-const STORAGE_KEY = 'pc_clients'
-
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
-}
-
-function loadFromStorage(): Client[] {
-  const raw = localStorage.getItem(STORAGE_KEY)
-  return raw ? JSON.parse(raw) as Client[] : []
-}
-
-function saveToStorage(items: Client[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
-}
+import { api } from '@/services/api'
 
 export const useClientsStore = defineStore('clients', () => {
-  const clients = ref<Client[]>(loadFromStorage())
+  const clients = ref<Client[]>([])
+  const loading = ref(false)
 
   const activeClients = computed(() => clients.value.filter(c => c.status === 'active'))
   const b2bClients = computed(() => clients.value.filter(c => c.type === 'b2b'))
   const b2cClients = computed(() => clients.value.filter(c => c.type === 'b2c'))
 
+  async function fetchAll() {
+    loading.value = true
+    try {
+      clients.value = await api.get<Client[]>('/clients')
+    } finally {
+      loading.value = false
+    }
+  }
+
   function getById(id: string): Client | undefined {
     return clients.value.find(c => c.id === id)
   }
 
-  function add(data: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) {
-    const now = new Date().toISOString()
-    const client: Client = { ...data, id: generateId(), createdAt: now, updatedAt: now }
-    clients.value.push(client)
-    saveToStorage(clients.value)
+  async function add(data: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) {
+    const client = await api.post<Client>('/clients', data)
+    clients.value.unshift(client)
     return client
   }
 
-  function update(id: string, data: Partial<Client>) {
+  async function update(id: string, data: Partial<Client>) {
+    const updated = await api.put<Client>(`/clients/${id}`, data)
     const idx = clients.value.findIndex(c => c.id === id)
-    if (idx === -1) return
-    clients.value[idx] = { ...clients.value[idx], ...data, updatedAt: new Date().toISOString() }
-    saveToStorage(clients.value)
+    if (idx !== -1) clients.value[idx] = updated
+    return updated
   }
 
-  function remove(id: string) {
+  async function remove(id: string) {
+    await api.delete(`/clients/${id}`)
     clients.value = clients.value.filter(c => c.id !== id)
-    saveToStorage(clients.value)
   }
 
   function search(query: string, type?: ClientType, status?: ClientStatus): Client[] {
@@ -62,5 +56,5 @@ export const useClientsStore = defineStore('clients', () => {
     })
   }
 
-  return { clients, activeClients, b2bClients, b2cClients, getById, add, update, remove, search }
+  return { clients, loading, activeClients, b2bClients, b2cClients, getById, fetchAll, add, update, remove, search }
 })

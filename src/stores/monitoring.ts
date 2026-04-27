@@ -1,38 +1,28 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { MonitoringPoint, CheckResult, PointStatus, PointType } from '@/types'
-
-const POINTS_KEY = 'pc_points'
-const CHECKS_KEY = 'pc_checks'
-
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
-}
-
-function loadPoints(): MonitoringPoint[] {
-  const raw = localStorage.getItem(POINTS_KEY)
-  return raw ? JSON.parse(raw) as MonitoringPoint[] : []
-}
-
-function savePoints(items: MonitoringPoint[]) {
-  localStorage.setItem(POINTS_KEY, JSON.stringify(items))
-}
-
-function loadChecks(): CheckResult[] {
-  const raw = localStorage.getItem(CHECKS_KEY)
-  return raw ? JSON.parse(raw) as CheckResult[] : []
-}
-
-function saveChecks(items: CheckResult[]) {
-  localStorage.setItem(CHECKS_KEY, JSON.stringify(items))
-}
+import { api } from '@/services/api'
 
 export const useMonitoringStore = defineStore('monitoring', () => {
-  const points = ref<MonitoringPoint[]>(loadPoints())
-  const checks = ref<CheckResult[]>(loadChecks())
+  const points = ref<MonitoringPoint[]>([])
+  const checks = ref<CheckResult[]>([])
+  const loading = ref(false)
 
   const activePoints = computed(() => points.value.filter(p => p.status === 'active'))
   const triggeredPoints = computed(() => points.value.filter(p => p.status === 'triggered'))
+
+  async function fetchPoints() {
+    loading.value = true
+    try {
+      points.value = await api.get<MonitoringPoint[]>('/points')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function fetchChecks() {
+    checks.value = await api.get<CheckResult[]>('/checks')
+  }
 
   function getPointById(id: string): MonitoringPoint | undefined {
     return points.value.find(p => p.id === id)
@@ -52,36 +42,36 @@ export const useMonitoringStore = defineStore('monitoring', () => {
     return checks.value.filter(c => c.visitId === visitId)
   }
 
-  function addPoint(data: Omit<MonitoringPoint, 'id'>) {
-    const point: MonitoringPoint = { ...data, id: generateId() }
+  async function addPoint(data: Omit<MonitoringPoint, 'id'>) {
+    const point = await api.post<MonitoringPoint>('/points', data)
     points.value.push(point)
-    savePoints(points.value)
     return point
   }
 
-  function updatePoint(id: string, data: Partial<MonitoringPoint>) {
+  async function updatePoint(id: string, data: Partial<MonitoringPoint>) {
+    const updated = await api.put<MonitoringPoint>(`/points/${id}`, data)
     const idx = points.value.findIndex(p => p.id === id)
-    if (idx === -1) return
-    points.value[idx] = { ...points.value[idx], ...data }
-    savePoints(points.value)
+    if (idx !== -1) points.value[idx] = updated
+    return updated
   }
 
-  function removePoint(id: string) {
+  async function removePoint(id: string) {
+    await api.delete(`/points/${id}`)
     points.value = points.value.filter(p => p.id !== id)
-    savePoints(points.value)
   }
 
-  function addCheck(data: Omit<CheckResult, 'id'>) {
-    const check: CheckResult = { ...data, id: generateId() }
-    checks.value.push(check)
-    saveChecks(checks.value)
+  async function addCheck(data: Omit<CheckResult, 'id'>) {
+    const check = await api.post<CheckResult>('/checks', data)
+    checks.value.unshift(check)
 
-    const point = points.value.find(p => p.id === data.pointId)
-    if (point) {
-      updatePoint(point.id, {
-        lastCheckedAt: data.checkedAt,
-        status: data.activity ? 'triggered' : 'active'
-      })
+    if (data.pointId) {
+      const point = points.value.find(p => p.id === data.pointId)
+      if (point) {
+        await updatePoint(point.id, {
+          lastCheckedAt: data.checkedAt,
+          status: data.activity ? 'triggered' : 'active'
+        })
+      }
     }
     return check
   }
@@ -101,8 +91,8 @@ export const useMonitoringStore = defineStore('monitoring', () => {
   }
 
   return {
-    points, checks, activePoints, triggeredPoints,
+    points, checks, loading, activePoints, triggeredPoints,
     getPointById, getPointsByObjectId, getChecksByPointId, getChecksByVisitId,
-    addPoint, updatePoint, removePoint, addCheck, searchPoints
+    fetchPoints, fetchChecks, addPoint, updatePoint, removePoint, addCheck, searchPoints
   }
 })

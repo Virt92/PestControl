@@ -1,9 +1,17 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import DashboardView from '@/views/DashboardView.vue'
+import LoginView from '@/views/LoginView.vue'
+import { getToken } from '@/services/api'
 
 export const router = createRouter({
   history: createWebHashHistory(),
   routes: [
+    {
+      path: '/login',
+      name: 'login',
+      component: LoginView,
+      meta: { title: 'Вхід', public: true }
+    },
     {
       path: '/',
       name: 'dashboard',
@@ -88,4 +96,8 @@ export const router = createRouter({
 router.beforeEach((to) => {
   const title = (to.meta.title as string) ?? 'PestControl'
   document.title = `${title} — PestControl`
+
+  if (!to.meta.public && !getToken()) {
+    return { name: 'login' }
+  }
 })

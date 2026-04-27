@@ -1,27 +1,23 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Document, DocumentStatus, DocumentType } from '@/types'
-
-const STORAGE_KEY = 'pc_documents'
-
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
-}
-
-function loadFromStorage(): Document[] {
-  const raw = localStorage.getItem(STORAGE_KEY)
-  return raw ? JSON.parse(raw) as Document[] : []
-}
-
-function saveToStorage(items: Document[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
-}
+import { api } from '@/services/api'
 
 export const useDocumentsStore = defineStore('documents', () => {
-  const documents = ref<Document[]>(loadFromStorage())
+  const documents = ref<Document[]>([])
+  const loading = ref(false)
 
   const drafts = computed(() => documents.value.filter(d => d.status === 'draft'))
   const published = computed(() => documents.value.filter(d => d.status === 'published'))
+
+  async function fetchAll() {
+    loading.value = true
+    try {
+      documents.value = await api.get<Document[]>('/documents')
+    } finally {
+      loading.value = false
+    }
+  }
 
   function getById(id: string): Document | undefined {
     return documents.value.find(d => d.id === id)
@@ -31,28 +27,26 @@ export const useDocumentsStore = defineStore('documents', () => {
     return documents.value.filter(d => d.objectId === objectId)
   }
 
-  function add(data: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>) {
-    const now = new Date().toISOString()
-    const doc: Document = { ...data, id: generateId(), createdAt: now, updatedAt: now }
-    documents.value.push(doc)
-    saveToStorage(documents.value)
+  async function add(data: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>) {
+    const doc = await api.post<Document>('/documents', data)
+    documents.value.unshift(doc)
     return doc
   }
 
-  function update(id: string, data: Partial<Document>) {
+  async function update(id: string, data: Partial<Document>) {
+    const updated = await api.put<Document>(`/documents/${id}`, data)
     const idx = documents.value.findIndex(d => d.id === id)
-    if (idx === -1) return
-    documents.value[idx] = { ...documents.value[idx], ...data, updatedAt: new Date().toISOString() }
-    saveToStorage(documents.value)
+    if (idx !== -1) documents.value[idx] = updated
+    return updated
   }
 
-  function publish(id: string) {
-    update(id, { status: 'published', publishedAt: new Date().toISOString() })
+  async function publish(id: string) {
+    return update(id, { status: 'published', publishedAt: new Date().toISOString() })
   }
 
-  function remove(id: string) {
+  async function remove(id: string) {
+    await api.delete(`/documents/${id}`)
     documents.value = documents.value.filter(d => d.id !== id)
-    saveToStorage(documents.value)
   }
 
   function search(query: string, objectId?: string, type?: DocumentType, status?: DocumentStatus): Document[] {
@@ -66,5 +60,5 @@ export const useDocumentsStore = defineStore('documents', () => {
     })
   }
 
-  return { documents, drafts, published, getById, getByObjectId, add, update, publish, remove, search }
+  return { documents, loading, drafts, published, getById, getByObjectId, fetchAll, add, update, publish, remove, search }
 })
