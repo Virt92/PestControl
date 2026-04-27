@@ -11,6 +11,7 @@ import DataTable from '@/components/ui/DataTable.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
 import StatCard from '@/components/ui/StatCard.vue'
 import PointFormModal from '@/components/monitoring/PointFormModal.vue'
+import { batchGenerateQR, printQRBatch } from '@/utils/qr'
 
 const router = useRouter()
 const monitoringStore = useMonitoringStore()
@@ -68,6 +69,16 @@ function formatDate(iso: string | null): string {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('uk-UA')
 }
+
+async function batchPrintQR() {
+  const tags = filteredPoints.value.map(p => ({
+    tagId: p.tagId,
+    label: `Точка №${p.number} — ${p.objectName}`
+  }))
+  if (tags.length === 0) return
+  const items = await batchGenerateQR(tags)
+  printQRBatch(items)
+}
 </script>
 
 <template>
@@ -82,6 +93,12 @@ function formatDate(iso: string | null): string {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
           Додати точку
+        </button>
+        <button
+          class="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+          @click="batchPrintQR"
+        >
+          Друк QR
         </button>
       </template>
     </PageHeader>

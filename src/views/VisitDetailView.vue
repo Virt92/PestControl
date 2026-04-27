@@ -12,6 +12,7 @@ import StatusBadge from '@/components/ui/StatusBadge.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import VisitFormModal from '@/components/visits/VisitFormModal.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import { generateVisitAct } from '@/utils/pdf'
 
 const route = useRoute()
 const router = useRouter()
@@ -70,6 +71,12 @@ function completeVisit() {
   })
 }
 
+function downloadAct() {
+  if (!visit.value || !obj.value || !client.value) return
+  const allPoints = monitoringStore.getPointsByObjectId(visit.value.objectId)
+  generateVisitAct(visit.value, obj.value, client.value, checks.value, allPoints)
+}
+
 function formatDate(iso: string | null): string {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -108,6 +115,12 @@ function formatDate(iso: string | null): string {
           @click="completeVisit"
         >
           Завершити
+        </button>
+        <button
+          class="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+          @click="downloadAct"
+        >
+          Акт PDF
         </button>
         <button
           class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"

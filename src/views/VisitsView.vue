@@ -11,6 +11,8 @@ import SearchBar from '@/components/ui/SearchBar.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
 import VisitFormModal from '@/components/visits/VisitFormModal.vue'
+import KanbanBoard from '@/components/kanban/KanbanBoard.vue'
+import type { KanbanItem, KanbanColumn } from '@/components/kanban/KanbanBoard.vue'
 
 const router = useRouter()
 const visitsStore = useVisitsStore()
@@ -20,7 +22,7 @@ const clientsStore = useClientsStore()
 const searchQuery = ref('')
 const filterStatus = ref<VisitStatus | ''>('')
 const filterType = ref<VisitType | ''>('')
-const viewMode = ref<'table' | 'calendar'>('table')
+const viewMode = ref<'table' | 'calendar' | 'kanban'>('table')
 const showForm = ref(false)
 const editingVisit = ref<Visit | null>(null)
 
@@ -100,6 +102,33 @@ function isCurrentMonth(date: Date): boolean {
   const now = new Date()
   return date.getMonth() === now.getMonth()
 }
+
+const kanbanColumns = computed<KanbanColumn[]>(() => {
+  const statuses: { key: VisitStatus; label: string; color: string }[] = [
+    { key: 'planned', label: 'Заплановано', color: 'blue' },
+    { key: 'in_progress', label: 'В роботі', color: 'indigo' },
+    { key: 'completed', label: 'Завершено', color: 'green' },
+    { key: 'cancelled', label: 'Скасовано', color: 'gray' }
+  ]
+  return statuses.map(s => ({
+    key: s.key,
+    label: s.label,
+    color: s.color,
+    items: filteredVisits.value
+      .filter(v => v.status === s.key)
+      .map(v => ({
+        id: v.id,
+        title: v.objectName,
+        subtitle: `${v.clientName} — ${VISIT_TYPE_LABELS[v.type as VisitType]}`,
+        status: v.status,
+        date: formatDate(v.scheduledAt)
+      }))
+  }))
+})
+
+function onKanbanItemClick(item: KanbanItem) {
+  router.push({ name: 'visit-detail', params: { id: item.id } })
+}
 </script>
 
 <template>
@@ -118,6 +147,12 @@ function isCurrentMonth(date: Date): boolean {
             @click="viewMode = 'calendar'"
           >
             Календар
+          </button>
+          <button
+            :class="['px-3 py-1.5 text-xs font-medium rounded-md', viewMode === 'kanban' ? 'bg-white shadow text-gray-900' : 'text-gray-500']"
+            @click="viewMode = 'kanban'"
+          >
+            Kanban
           </button>
         </div>
         <button
@@ -215,6 +250,11 @@ function isCurrentMonth(date: Date): boolean {
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Kanban view -->
+    <div v-if="viewMode === 'kanban'">
+      <KanbanBoard :columns="kanbanColumns" @item-click="onKanbanItemClick" />
     </div>
 
     <VisitFormModal
