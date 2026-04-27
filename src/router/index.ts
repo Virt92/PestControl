@@ -17,10 +17,22 @@ export const router = createRouter({
       meta: { title: 'Клієнти' }
     },
     {
+      path: '/clients/:id',
+      name: 'client-detail',
+      component: () => import('@/views/ClientDetailView.vue'),
+      meta: { title: 'Клієнт' }
+    },
+    {
       path: '/objects',
       name: 'objects',
       component: () => import('@/views/ObjectsView.vue'),
       meta: { title: "Об'єкти" }
+    },
+    {
+      path: '/objects/:id',
+      name: 'object-detail',
+      component: () => import('@/views/ObjectDetailView.vue'),
+      meta: { title: "Об'єкт" }
     },
     {
       path: '/visits',
@@ -29,16 +41,34 @@ export const router = createRouter({
       meta: { title: 'Виїзди' }
     },
     {
+      path: '/visits/:id',
+      name: 'visit-detail',
+      component: () => import('@/views/VisitDetailView.vue'),
+      meta: { title: 'Виїзд' }
+    },
+    {
       path: '/monitoring',
       name: 'monitoring',
       component: () => import('@/views/MonitoringView.vue'),
       meta: { title: 'Моніторинг' }
     },
     {
+      path: '/monitoring/:id',
+      name: 'point-detail',
+      component: () => import('@/views/PointDetailView.vue'),
+      meta: { title: 'Точка моніторингу' }
+    },
+    {
       path: '/documents',
       name: 'documents',
       component: () => import('@/views/DocumentsView.vue'),
       meta: { title: 'Документи' }
+    },
+    {
+      path: '/notifications',
+      name: 'notifications',
+      component: () => import('@/views/NotificationsView.vue'),
+      meta: { title: 'Повідомлення' }
     }
   ]
 })
