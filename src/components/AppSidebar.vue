@@ -11,6 +11,7 @@ const navItems = [
   { to: '/clients', icon: '👥', label: 'Клієнти', match: '/clients' },
   { to: '/objects', icon: '🏢', label: "Об'єкти", match: '/objects' },
   { to: '/visits', icon: '🚗', label: 'Виїзди', match: '/visits' },
+  { to: '/inspections', icon: '🔍', label: 'Обстеження', match: '/inspections' },
   { to: '/monitoring', icon: '📍', label: 'Моніторинг', match: '/monitoring' },
   { to: '/documents', icon: '📄', label: 'Документи', match: '/documents' },
   { to: '/plans', icon: '📋', label: 'Плани', match: '/plans' },

@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api, setToken, getToken } from '@/services/api'
+import type { UserRole } from '@/types'
 
 export interface AuthUser {
   id: string
   email: string
   fullName: string
-  role: 'admin' | 'master' | 'client'
+  role: UserRole
 }
 
 interface AuthResponse {
@@ -17,6 +18,11 @@ interface AuthResponse {
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthUser | null>(loadUser())
   const isAuthenticated = computed(() => !!user.value && !!getToken())
+  const isAdmin = computed(() => user.value?.role === 'admin')
+  const isAuditor = computed(() => user.value?.role === 'auditor')
+  const isMaster = computed(() => user.value?.role === 'master')
+  const isClient = computed(() => user.value?.role === 'client')
+  const canManage = computed(() => user.value?.role === 'admin' || user.value?.role === 'auditor')
 
   function loadUser(): AuthUser | null {
     const raw = localStorage.getItem('pc_user')
@@ -57,5 +63,5 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, isAuthenticated, login, register, logout, checkAuth }
+  return { user, isAuthenticated, isAdmin, isAuditor, isMaster, isClient, canManage, login, register, logout, checkAuth }
 })

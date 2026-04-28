@@ -4,6 +4,7 @@ import {
 
 export enum UserRole {
   ADMIN = 'admin',
+  AUDITOR = 'auditor',
   MASTER = 'master',
   CLIENT = 'client',
 }
@@ -33,6 +34,9 @@ export class User {
 
   @Column({ nullable: true })
   clientId: string;
+
+  @Column({ nullable: true })
+  companyId: string;
 
   @CreateDateColumn()
   createdAt: Date;

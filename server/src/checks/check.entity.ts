@@ -16,6 +16,9 @@ export class CheckResult {
   @Column()
   objectId: string;
 
+  @Column({ nullable: true })
+  companyId: string;
+
   @Column({ default: false })
   activity: boolean;
 
@@ -42,6 +45,15 @@ export class CheckResult {
 
   @Column({ type: 'text', default: '' })
   notes: string;
+
+  @Column({ default: '' })
+  result: string;
+
+  @Column({ type: 'float', nullable: true })
+  remainingGrams: number | null;
+
+  @Column({ type: 'float', nullable: true })
+  refilledGrams: number | null;
 
   @CreateDateColumn()
   checkedAt: Date;

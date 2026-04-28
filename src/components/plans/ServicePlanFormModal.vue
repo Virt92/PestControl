@@ -66,7 +66,9 @@ function onSubmit() {
     startDate: form.value.startDate,
     endDate: form.value.endDate || null,
     status: form.value.status,
-    notes: form.value.notes
+    notes: form.value.notes,
+    accessConditions: '',
+    workTypes: [] as string[],
   })
 }
 </script>

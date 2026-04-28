@@ -106,9 +106,12 @@ function submitCheck() {
     correctiveAction: checkForm.value.correctiveAction,
     equipmentStatus: checkForm.value.equipmentStatus,
     notes: checkForm.value.notes,
+    result: checkForm.value.activity ? 'activity_detected' : 'clean',
+    remainingGrams: null,
+    refilledGrams: null,
     checkedAt: new Date().toISOString(),
-    checkedBy: 'Адмін'
-  })
+    checkedBy: 'Адмін',
+  } as any)
   showCheckForm.value = false
 }
 

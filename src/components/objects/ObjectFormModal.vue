@@ -59,7 +59,7 @@ const modalTitle = computed(() => props.object ? 'Редагувати об\'є�
 
 function onSubmit() {
   if (!form.value.name.trim() || !form.value.clientId) return
-  emit('save', { ...form.value })
+  emit('save', { ...form.value, zones: [] } as any)
 }
 </script>
 

@@ -44,6 +44,18 @@ export class SiteObject {
   @Column({ default: 'active' })
   status: string;
 
+  @Column({ nullable: true })
+  companyId: string;
+
+  @Column({ type: 'simple-json', default: '[]' })
+  zones: { name: string; floor: string; description: string; }[];
+
+  @Column({ nullable: true })
+  assignedMasterId: string;
+
+  @Column({ nullable: true })
+  assignedAuditorId: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

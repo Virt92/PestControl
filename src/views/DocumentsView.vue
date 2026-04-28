@@ -68,8 +68,10 @@ function onSave() {
   if (!form.value.title.trim()) return
   documentsStore.add({
     ...form.value,
-    publishedAt: null
-  })
+    inspectionId: null,
+    publishedToClient: false,
+    publishedAt: null,
+  } as any)
   showForm.value = false
 }
 

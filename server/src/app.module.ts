@@ -16,6 +16,9 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { PlansModule } from './plans/plans.module';
 import { AuditModule } from './audit/audit.module';
 import { FilesModule } from './files/files.module';
+import { InspectionsModule } from './inspections/inspections.module';
+import { DictionariesModule } from './dictionaries/dictionaries.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
   imports: [
@@ -50,6 +53,9 @@ import { FilesModule } from './files/files.module';
     PlansModule,
     AuditModule,
     FilesModule,
+    InspectionsModule,
+    DictionariesModule,
+    SchedulerModule,
   ],
 })
 export class AppModule {}

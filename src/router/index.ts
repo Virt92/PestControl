@@ -85,6 +85,12 @@ export const router = createRouter({
       meta: { title: 'Плани обслуговування' }
     },
     {
+      path: '/inspections',
+      name: 'inspections',
+      component: () => import('@/views/InspectionsView.vue'),
+      meta: { title: 'Обстеження' }
+    },
+    {
       path: '/portal',
       name: 'portal',
       component: () => import('@/views/ClientPortalView.vue'),

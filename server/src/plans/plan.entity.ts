@@ -13,6 +13,9 @@ export class ServicePlan {
   @Column()
   clientId: string;
 
+  @Column({ nullable: true })
+  companyId: string;
+
   @Column()
   title: string;
 
@@ -33,6 +36,12 @@ export class ServicePlan {
 
   @Column({ default: 'active' })
   status: string;
+
+  @Column({ type: 'text', default: '' })
+  accessConditions: string;
+
+  @Column({ type: 'simple-json', default: '[]' })
+  workTypes: string[];
 
   @Column({ type: 'text', default: '' })
   notes: string;

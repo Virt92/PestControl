@@ -13,6 +13,9 @@ export class Visit {
   @Column()
   clientId: string;
 
+  @Column({ nullable: true })
+  companyId: string;
+
   @Column({ default: '' })
   assignedTo: string;
 

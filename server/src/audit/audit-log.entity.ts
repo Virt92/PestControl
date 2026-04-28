@@ -22,6 +22,9 @@ export class AuditLog {
   @Column({ default: '' })
   userName: string;
 
+  @Column({ nullable: true })
+  companyId: string;
+
   @Column({ type: 'text', default: '' })
   details: string;
 

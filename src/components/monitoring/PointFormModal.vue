@@ -69,7 +69,10 @@ function onSubmit() {
   if (!form.value.objectId) return
   emit('save', {
     ...form.value,
-    installedAt: new Date(form.value.installedAt).toISOString()
+    installedAt: new Date(form.value.installedAt).toISOString(),
+    qrStatus: (form.value.tagId ? 'bound' : 'free') as any,
+    checkIntervalHours: form.value.type === 'bait_station' ? 72 : 168,
+    nextCheckDue: null,
   })
 }
 </script>

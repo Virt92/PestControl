@@ -16,6 +16,12 @@ export class Document {
   @Column({ nullable: true })
   visitId: string;
 
+  @Column({ nullable: true })
+  inspectionId: string;
+
+  @Column({ nullable: true })
+  companyId: string;
+
   @Column({ default: 'act' })
   type: string;
 
@@ -27,6 +33,18 @@ export class Document {
 
   @Column({ default: '' })
   createdBy: string;
+
+  @Column({ default: false })
+  publishedToClient: boolean;
+
+  @Column({ nullable: true })
+  templateId: string;
+
+  @Column({ type: 'text', nullable: true })
+  content: string;
+
+  @Column({ nullable: true })
+  fileUrl: string;
 
   @CreateDateColumn()
   createdAt: Date;

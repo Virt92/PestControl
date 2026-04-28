@@ -17,6 +17,11 @@ export class MonitoringController {
     return this.service.findAll();
   }
 
+  @Get('overdue')
+  findOverdue() {
+    return this.service.findOverdue();
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const e = await this.service.findById(id);
@@ -36,6 +41,22 @@ export class MonitoringController {
     const e = await this.service.update(id, data);
     if (!e) throw new NotFoundException();
     await this.audit.log('update', 'point', id, req.user?.id, req.user?.email, `Updated point #${e.number}`);
+    return e;
+  }
+
+  @Put(':id/bind-qr')
+  async bindQr(@Param('id') id: string, @Body() body: { tagId: string }, @Req() req: any) {
+    const e = await this.service.bindQr(id, body.tagId);
+    if (!e) throw new NotFoundException();
+    await this.audit.log('bind_qr', 'point', id, req.user?.id, req.user?.email, `Bound QR ${body.tagId} to point #${e.number}`);
+    return e;
+  }
+
+  @Put(':id/deactivate')
+  async deactivate(@Param('id') id: string, @Req() req: any) {
+    const e = await this.service.deactivateQr(id);
+    if (!e) throw new NotFoundException();
+    await this.audit.log('deactivate', 'point', id, req.user?.id, req.user?.email, `Deactivated point #${e.number}`);
     return e;
   }
 

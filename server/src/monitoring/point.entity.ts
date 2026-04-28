@@ -39,6 +39,21 @@ export class MonitoringPoint {
   @Column({ default: 'active' })
   status: string;
 
+  @Column({ nullable: true })
+  companyId: string;
+
+  @Column({ default: 'free' })
+  qrStatus: string;
+
+  @Column({ nullable: true })
+  nfcId: string;
+
+  @Column({ default: 72 })
+  checkIntervalHours: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  nextCheckDue: Date | null;
+
   @CreateDateColumn()
   installedAt: Date;
 
