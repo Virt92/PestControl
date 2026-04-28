@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PestControl API — Документація для мобільного додатку</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f8fafc; color:#1e293b; line-height:1.6; }
+  .container { max-width:900px; margin:0 auto; padding:20px; }
+  h1 { color:#0f172a; margin-bottom:8px; }
+  h2 { color:#1e40af; border-bottom:2px solid #bfdbfe; padding-bottom:8px; margin:32px 0 16px; }
+  h3 { color:#334155; margin:20px 0 8px; }
+  p { margin:8px 0; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:12px; font-weight:600; text-transform:uppercase; }
+  .get { background:#dcfce7; color:#166534; }
+  .post { background:#dbeafe; color:#1e40af; }
+  .put { background:#fef3c7; color:#92400e; }
+  .delete { background:#fee2e2; color:#991b1b; }
+  .endpoint { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin:12px 0; }
+  .endpoint-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .endpoint-path { font-family:'Fira Code',monospace; font-weight:600; font-size:15px; }
+  code { background:#f1f5f9; padding:2px 6px; border-radius:4px; font-family:'Fira Code',monospace; font-size:13px; }
+  pre { background:#1e293b; color:#e2e8f0; padding:16px; border-radius:8px; overflow-x:auto; font-size:13px; margin:8px 0; }
+  pre code { background:transparent; color:inherit; }
+  table { width:100%; border-collapse:collapse; margin:8px 0; }
+  th { background:#f1f5f9; text-align:left; padding:8px 12px; font-size:13px; border:1px solid #e2e8f0; }
+  td { padding:8px 12px; font-size:13px; border:1px solid #e2e8f0; }
+  .required { color:#dc2626; font-size:11px; }
+  .note { background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px 16px; margin:12px 0; }
+  .section-intro { background:#eff6ff; border-radius:8px; padding:16px; margin-bottom:16px; }
+  .flow { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:16px; margin:16px 0; }
+  .flow ol { padding-left:20px; }
+  .flow li { margin:4px 0; }
+  .toc { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin:16px 0; }
+  .toc ul { padding-left:20px; }
+  .toc li { margin:4px 0; }
+  .toc a { color:#1e40af; text-decoration:none; }
+  .toc a:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>PestControl API</h1>
+<p>Документація для розробки мобільного додатку працівника (Майстер / Аудитор)</p>
+<p><strong>Base URL:</strong> <code>http://204.168.227.102:4000/api</code></p>
+<p><strong>Версія:</strong> 1.0 | <strong>Формат:</strong> JSON | <strong>Авторизація:</strong> Bearer JWT Token</p>
+
+<div class="toc">
+<h3>Зміст</h3>
+<ul>
+<li><a href="#auth">1. Авторизація</a></li>
+<li><a href="#qr">2. QR-сканування (основний flow)</a></li>
+<li><a href="#points">3. Моніторингові точки</a></li>
+<li><a href="#checks">4. Перевірки точок</a></li>
+<li><a href="#visits">5. Виїзди</a></li>
+<li><a href="#inspections">6. Обстеження</a></li>
+<li><a href="#objects">7. Об'єкти</a></li>
+<li><a href="#clients">8. Клієнти</a></li>
+<li><a href="#documents">9. Документи</a></li>
+<li><a href="#notifications">10. Повідомлення</a></li>
+<li><a href="#dictionaries">11. Словники (без авторизації)</a></li>
+<li><a href="#files">12. Файли</a></li>
+<li><a href="#flow-qr">13. Flow: QR-сканування та створення перевірки</a></li>
+</ul>
+</div>
+
+<!-- ===== AUTH ===== -->
+<h2 id="auth">1. Авторизація</h2>
+<p>Всі запити (крім <code>/api/auth/*</code> та <code>/api/dictionaries/*</code>) потребують JWT токен в заголовку:</p>
+<pre><code>Authorization: Bearer &lt;token&gt;</code></pre>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge post">POST</span>
+<span class="endpoint-path">/auth/login</span>
+</div>
+<p>Вхід в систему. Повертає JWT токен та дані користувача.</p>
+<p><strong>Body:</strong></p>
+<pre><code>{
+  "email": "master@pestcontrol.ua",
+  "password": "admin123"
+}</code></pre>
+<p><strong>Response 200:</strong></p>
+<pre><code>{
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "uuid",
+    "email": "master@pestcontrol.ua",
+    "fullName": "Іван Майстер",
+    "role": "master"
+  }
+}</code></pre>
+<p><strong>Ролі:</strong> <code>admin</code>, <code>auditor</code>, <code>master</code>, <code>client</code></p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge post">POST</span>
+<span class="endpoint-path">/auth/register</span>
+</div>
+<p>Реєстрація нового користувача.</p>
+<pre><code>{
+  "email": "new@example.com",
+  "password": "password123",
+  "fullName": "Нове Ім'я",
+  "role": "master"
+}</code></pre>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/auth/me</span>
+</div>
+<p>Поточний авторизований користувач. Для перевірки валідності токена.</p>
+</div>
+
+<div class="note">
+<strong>Тестові акаунти (пароль: admin123):</strong><br>
+Admin: admin@pestcontrol.ua | Auditor: auditor@pestcontrol.ua | Master: master@pestcontrol.ua | Client: client@metro.ua
+</div>
+
+<!-- ===== QR ===== -->
+<h2 id="qr">2. QR-сканування</h2>
+<div class="section-intro">
+<p>QR-код на моніторинговій точці містить <code>tagId</code> (наприклад <code>QR-M001-005</code>). Мобільний додаток сканує код і отримує дані точки.</p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/points?tagId={tagId}</span>
+</div>
+<p>Пошук точки за QR-кодом (Tag ID). Повертає масив — зазвичай один елемент.</p>
+<p><strong>Приклад:</strong> <code>GET /api/points?tagId=QR-M001-005</code></p>
+<p><strong>Response 200:</strong></p>
+<pre><code>[
+  {
+    "id": "uuid",
+    "objectId": "uuid",
+    "number": 5,
+    "tagId": "QR-M001-005",
+    "type": "trap",
+    "zone": "Склад продуктів",
+    "floor": "1",
+    "positionX": 0.2,
+    "positionY": 0.4,
+    "status": "active",
+    "qrStatus": "bound",
+    "checkIntervalHours": 168,
+    "nextCheckDue": "2026-04-28T10:00:00.000Z",
+    "lastCheckedAt": "2026-04-21T10:00:00.000Z",
+    "notes": ""
+  }
+]</code></pre>
+<p><strong>Якщо точку не знайдено</strong> — порожній масив <code>[]</code></p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge put">PUT</span>
+<span class="endpoint-path">/points/{id}/bind-qr</span>
+</div>
+<p>Прив'язати QR-код до точки (змінює <code>qrStatus</code> на <code>bound</code>).</p>
+<pre><code>{
+  "tagId": "QR-NEW-001"
+}</code></pre>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge put">PUT</span>
+<span class="endpoint-path">/points/{id}/deactivate</span>
+</div>
+<p>Деактивувати точку і QR-код. <code>qrStatus</code> → <code>deactivated</code>, <code>status</code> → <code>inactive</code>.</p>
+</div>
+
+<!-- ===== POINTS ===== -->
+<h2 id="points">3. Моніторингові точки</h2>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/points</span>
+</div>
+<p>Всі точки. Фільтр: <code>?objectId={id}</code></p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/points/overdue</span>
+</div>
+<p>Прострочені точки (де <code>nextCheckDue &lt; now</code>). Для push-повідомлень в мобільному.</p>
+<p><strong>Response:</strong> масив точок відсортованих по <code>nextCheckDue ASC</code></p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/points/{id}</span>
+</div>
+<p>Деталі однієї точки.</p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge post">POST</span>
+<span class="endpoint-path">/points</span>
+</div>
+<p>Створити нову точку.</p>
+<table>
+<tr><th>Поле</th><th>Тип</th><th>Обов'язкове</th><th>Опис</th></tr>
+<tr><td>objectId</td><td>string (uuid)</td><td class="required">так</td><td>ID об'єкта</td></tr>
+<tr><td>number</td><td>number</td><td class="required">так</td><td>Номер точки</td></tr>
+<tr><td>tagId</td><td>string</td><td>ні</td><td>QR Tag ID</td></tr>
+<tr><td>type</td><td>string</td><td class="required">так</td><td>trap | bait_station | feeder | control_point | uv_trap | pheromone_trap</td></tr>
+<tr><td>zone</td><td>string</td><td>ні</td><td>Зона розташування</td></tr>
+<tr><td>floor</td><td>string</td><td>ні</td><td>Поверх</td></tr>
+<tr><td>positionX</td><td>number</td><td>ні</td><td>0-1 координата на плані</td></tr>
+<tr><td>positionY</td><td>number</td><td>ні</td><td>0-1 координата на плані</td></tr>
+<tr><td>checkIntervalHours</td><td>number</td><td>ні</td><td>Інтервал перевірки (за замовч. 72)</td></tr>
+</table>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge put">PUT</span>
+<span class="endpoint-path">/points/{id}</span>
+</div>
+<p>Оновити точку (часткове оновлення).</p>
+</div>
+
+<!-- ===== CHECKS ===== -->
+<h2 id="checks">4. Перевірки точок</h2>
+<div class="section-intro">
+<p>Основний робочий процес майстра — створення перевірок після сканування QR-коду.</p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge post">POST</span>
+<span class="endpoint-path">/checks</span>
+</div>
+<p>Створити перевірку. <strong>Автоматично оновлює статус точки</strong> та створює повідомлення при високій активності або пошкодженому обладнанні.</p>
+<pre><code>{
+  "visitId": "uuid",
+  "pointId": "uuid",
+  "objectId": "uuid",
+  "activity": true,
+  "activityLevel": 3,
+  "consumptionPercent": 45,
+  "consumptionGrams": 22,
+  "pestType": "rodents",
+  "equipmentStatus": "ok",
+  "correctiveAction": "Замінено приманку",
+  "notes": "Сліди гризунів біля стіни",
+  "result": "high_activity",
+  "remainingGrams": 28,
+  "refilledGrams": 50,
+  "checkedAt": "2026-04-26T09:30:00.000Z",
+  "checkedBy": "uuid-майстра"
+}</code></pre>
+<table>
+<tr><th>Поле</th><th>Тип</th><th>Опис</th></tr>
+<tr><td>activity</td><td>boolean</td><td>Чи виявлена активність</td></tr>
+<tr><td>activityLevel</td><td>number (0-5)</td><td>Рівень активності (0 = немає, 5 = критичний)</td></tr>
+<tr><td>consumptionPercent</td><td>number | null</td><td>% поїдання приманки (для bait_station)</td></tr>
+<tr><td>consumptionGrams</td><td>number | null</td><td>Грами спожитої приманки</td></tr>
+<tr><td>pestType</td><td>string</td><td>rodents | cockroaches | ants | flies | bed_bugs | mosquitoes</td></tr>
+<tr><td>equipmentStatus</td><td>string</td><td>ok | damaged | missing | needs_replacement</td></tr>
+<tr><td>result</td><td>string</td><td>clean | low_activity | high_activity | critical</td></tr>
+<tr><td>remainingGrams</td><td>number | null</td><td>Залишок приманки (грами)</td></tr>
+<tr><td>refilledGrams</td><td>number | null</td><td>Скільки додано (грами)</td></tr>
+</table>
+
+<div class="note">
+<strong>Автоматичні дії після створення:</strong>
+<ul>
+<li>Оновлюється <code>point.lastCheckedAt</code> та <code>point.nextCheckDue</code></li>
+<li>Статус точки: <code>triggered</code> (activityLevel ≥ 3), <code>maintenance</code> (damaged/missing), <code>active</code> (ok)</li>
+<li>Якщо activityLevel ≥ 3 → авто-повідомлення <code>high_activity</code></li>
+<li>Якщо equipmentStatus = damaged/missing → авто-повідомлення <code>equipment_issue</code></li>
+</ul>
+</div>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/checks</span>
+</div>
+<p>Всі перевірки. Фільтри: <code>?visitId={id}</code>, <code>?pointId={id}</code>, <code>?objectId={id}</code></p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/checks/heatmap/{objectId}</span>
+</div>
+<p>Дані теплової карти для об'єкта. Параметри: <code>?from=&to=&pestType=&zone=</code></p>
+<pre><code>[
+  {
+    "pointId": "uuid",
+    "x": 0.2, "y": 0.4,
+    "score": 12.5,
+    "zone": "Склад",
+    "floor": "1",
+    "checks": 4
+  }
+]</code></pre>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/checks/consumption/{objectId}</span>
+</div>
+<p>Звіт витрати по точках. Параметр: <code>?months=6</code></p>
+</div>
+
+<!-- ===== VISITS ===== -->
+<h2 id="visits">5. Виїзди</h2>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/visits</span>
+</div>
+<p>Всі виїзди. Фільтри: <code>?objectId=</code>, <code>?clientId=</code>, <code>?status=</code>, <code>?assignedTo=</code></p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/visits/{id}</span>
+</div>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge post">POST</span>
+<span class="endpoint-path">/visits</span>
+</div>
+<pre><code>{
+  "objectId": "uuid",
+  "clientId": "uuid",
+  "assignedTo": "uuid-майстра",
+  "scheduledAt": "2026-04-27T09:00:00.000Z",
+  "type": "monitoring_check",
+  "status": "planned",
+  "notes": "Планова перевірка",
+  "pointsTotal": 12
+}</code></pre>
+<p>Типи: <code>inspection | treatment | monitoring_check | follow_up | emergency</code></p>
+<p>Статуси: <code>planned → in_progress → completed | cancelled</code></p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge put">PUT</span>
+<span class="endpoint-path">/visits/{id}</span>
+</div>
+<p>Оновити виїзд (наприклад змінити статус на <code>completed</code>, додати <code>completedAt</code>, <code>pointsChecked</code>).</p>
+</div>
+
+<!-- ===== INSPECTIONS ===== -->
+<h2 id="inspections">6. Обстеження (Інспекції)</h2>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/inspections</span>
+</div>
+<p>Фільтри: <code>?objectId=</code>, <code>?clientId=</code></p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge post">POST</span>
+<span class="endpoint-path">/inspections</span>
+</div>
+<pre><code>{
+  "objectId": "uuid",
+  "clientId": "uuid",
+  "type": "initial",
+  "status": "planned",
+  "scheduledAt": "2026-05-01T09:00:00.000Z",
+  "assignedTo": "uuid-аудитора",
+  "checklist": [
+    {"question": "Стан дверей", "answer": ""}
+  ],
+  "findings": [],
+  "riskZones": [],
+  "recommendations": [],
+  "notes": "Первинне обстеження"
+}</code></pre>
+<p>Типи: <code>initial | periodic | audit</code></p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge put">PUT</span>
+<span class="endpoint-path">/inspections/{id}</span>
+</div>
+</div>
+
+<!-- ===== OBJECTS ===== -->
+<h2 id="objects">7. Об'єкти</h2>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/objects</span>
+</div>
+<p>Всі об'єкти. Фільтр: <code>?clientId=</code></p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/objects/{id}</span>
+</div>
+<p>Включає <code>zones[]</code>, <code>assignedMasterId</code>, <code>assignedAuditorId</code>.</p>
+</div>
+
+<!-- ===== CLIENTS ===== -->
+<h2 id="clients">8. Клієнти</h2>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/clients</span>
+</div>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/clients/{id}</span>
+</div>
+<p>Включає <code>contacts[]</code>, <code>edrpou</code>, <code>legalAddress</code>, <code>bankDetails</code>.</p>
+</div>
+
+<!-- ===== DOCUMENTS ===== -->
+<h2 id="documents">9. Документи</h2>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/documents</span>
+</div>
+<p>Фільтри: <code>?clientId=</code>, <code>?objectId=</code>, <code>?published=true</code></p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge put">PUT</span>
+<span class="endpoint-path">/documents/{id}/publish</span>
+</div>
+<p>Опублікувати документ для клієнта. Автоматично створює повідомлення.</p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge put">PUT</span>
+<span class="endpoint-path">/documents/{id}/unpublish</span>
+</div>
+<p>Зняти з публікації.</p>
+</div>
+
+<!-- ===== NOTIFICATIONS ===== -->
+<h2 id="notifications">10. Повідомлення</h2>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/notifications</span>
+</div>
+<p>Останні 100 повідомлень. Для мобільного — періодично перевіряти нові.</p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/notifications/unread</span>
+</div>
+<p>Тільки непрочитані.</p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge put">PUT</span>
+<span class="endpoint-path">/notifications/{id}/read</span>
+</div>
+<p>Позначити прочитаним.</p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge put">PUT</span>
+<span class="endpoint-path">/notifications/read-all</span>
+</div>
+<p>Позначити всі прочитаними.</p>
+</div>
+
+<!-- ===== DICTIONARIES ===== -->
+<h2 id="dictionaries">11. Словники (без авторизації)</h2>
+<div class="section-intro">
+<p>Ці ендпоінти не потребують JWT-токена. Використовуються для заповнення dropdown-меню в мобільному додатку.</p>
+</div>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge get">GET</span>
+<span class="endpoint-path">/dictionaries/pest-types</span>
+</div>
+<pre><code>[
+  {"value": "rodents", "label": "Гризуні"},
+  {"value": "cockroaches", "label": "Таргани"},
+  {"value": "ants", "label": "Мурахи"},
+  {"value": "flies", "label": "Мухи"},
+  {"value": "bed_bugs", "label": "Клопи"},
+  {"value": "mosquitoes", "label": "Комарі"},
+  {"value": "moths", "label": "Молі"},
+  {"value": "wasps", "label": "Оси"}
+]</code></pre>
+</div>
+
+<p>Інші словники:</p>
+<ul>
+<li><code>GET /dictionaries/point-types</code> — типи точок</li>
+<li><code>GET /dictionaries/check-results</code> — результати перевірок</li>
+<li><code>GET /dictionaries/equipment-statuses</code> — стани обладнання</li>
+<li><code>GET /dictionaries/visit-types</code> — типи виїздів</li>
+<li><code>GET /dictionaries/document-types</code> — типи документів</li>
+<li><code>GET /dictionaries/object-types</code> — типи об'єктів</li>
+<li><code>GET /dictionaries/zones</code> — типові зони</li>
+</ul>
+
+<!-- ===== FILES ===== -->
+<h2 id="files">12. Файли</h2>
+
+<div class="endpoint">
+<div class="endpoint-header">
+<span class="badge post">POST</span>
+<span class="endpoint-path">/files/upload</span>
+</div>
+<p>Завантаження файлу (фото, план). <code>Content-Type: multipart/form-data</code></p>
+<p>Поле: <code>file</code></p>
+<p><strong>Response:</strong></p>
+<pre><code>{
+  "url": "/uploads/abc123.jpg",
+  "filename": "abc123.jpg"
+}</code></pre>
+</div>
+
+<!-- ===== QR FLOW ===== -->
+<h2 id="flow-qr">13. Flow: QR-сканування та створення перевірки</h2>
+
+<div class="flow">
+<h3>Основний сценарій для мобільного додатку</h3>
+<ol>
+<li><strong>Логін:</strong> <code>POST /auth/login</code> → зберегти <code>accessToken</code></li>
+<li><strong>Отримати виїзди:</strong> <code>GET /visits?assignedTo={userId}&status=planned</code></li>
+<li><strong>Почати виїзд:</strong> <code>PUT /visits/{id}</code> з <code>{"status": "in_progress"}</code></li>
+<li><strong>Сканувати QR:</strong> отримати <code>tagId</code> з QR-коду</li>
+<li><strong>Знайти точку:</strong> <code>GET /points?tagId={tagId}</code></li>
+<li><strong>Показати інфо:</strong> номер точки, тип, зона, останній результат</li>
+<li><strong>Заповнити форму перевірки:</strong> активність, поїдання, стан, фото</li>
+<li><strong>Зберегти:</strong> <code>POST /checks</code> з даними перевірки</li>
+<li><strong>Повторити</strong> кроки 4-8 для кожної точки</li>
+<li><strong>Завершити виїзд:</strong> <code>PUT /visits/{id}</code> з <code>{"status": "completed", "completedAt": "...", "pointsChecked": N}</code></li>
+</ol>
+</div>
+
+<div class="flow">
+<h3>Сценарій: Прив'язка нового QR</h3>
+<ol>
+<li>Сканувати новий QR → отримати <code>tagId</code></li>
+<li><code>GET /points?tagId={tagId}</code> → порожній масив (точка не знайдена)</li>
+<li>Створити точку: <code>POST /points</code> з <code>tagId</code></li>
+<li>Або прив'язати до існуючої: <code>PUT /points/{id}/bind-qr</code> з <code>{"tagId": "..."}</code></li>
+</ol>
+</div>
+
+<div class="flow">
+<h3>Сценарій: Перевірка прострочених точок</h3>
+<ol>
+<li><code>GET /points/overdue</code> → список прострочених точок</li>
+<li>Показати push-повідомлення або badge з кількістю</li>
+<li>Натиснути на точку → навігація до об'єкта</li>
+</ol>
+</div>
+
+<div class="note">
+<strong>Рекомендації для мобільного додатку:</strong>
+<ul>
+<li>Зберігати токен в secure storage</li>
+<li>Кешувати словники локально (оновлювати раз на день)</li>
+<li>Підтримувати офлайн-режим — зберігати перевірки локально і синхронізувати при появі з'єднання</li>
+<li>Використовувати camera API для сканування QR і завантаження фото</li>
+<li>Перевіряти <code>/notifications/unread</code> кожні 30 секунд для показу badge</li>
+</ul>
+</div>
+
+<h2>14. Коди помилок</h2>
+<table>
+<tr><th>Код</th><th>Опис</th></tr>
+<tr><td>200</td><td>Успішно</td></tr>
+<tr><td>201</td><td>Створено</td></tr>
+<tr><td>400</td><td>Невірні дані</td></tr>
+<tr><td>401</td><td>Не авторизований (невалідний або відсутній токен)</td></tr>
+<tr><td>404</td><td>Не знайдено</td></tr>
+<tr><td>500</td><td>Серверна помилка</td></tr>
+</table>
+
+<hr style="margin:32px 0">
+<p style="color:#94a3b8; text-align:center">PestControl API v1.0 — Документ згенеровано 26.04.2026</p>
+
+</div>
+</body>
+</html>
