@@ -14,5 +14,13 @@ export default defineConfig({
     target: 'es2020',
     outDir: 'dist',
     sourcemap: false
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      }
+    }
   }
 })

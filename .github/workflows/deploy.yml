@@ -23,13 +23,13 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
         run: npm ci
 
-      - name: Typecheck
+      - name: Typecheck frontend
         run: npm run typecheck
 
-      - name: Build
+      - name: Build frontend
         run: npm run build
 
       - name: Set up SSH
@@ -39,14 +39,34 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy via rsync
+      - name: Deploy frontend via rsync
         run: |
           rsync -az --delete \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
             dist/ \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/
 
+      - name: Deploy backend via rsync
+        run: |
+          rsync -az --delete \
+            --exclude='node_modules' --exclude='dist' \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
+            server/ \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/pest-control-api/server/
+
+          rsync -az \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
+            docker-compose.yml \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/pest-control-api/
+
+      - name: Build and restart backend on server
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "cd /opt/pest-control-api && docker compose up -d --build"
+
       - name: Verify site responds
         run: |
-          sleep 2
+          sleep 5
           curl -fsS -o /dev/null -w "HTTP %{http_code}\n" http://${{ secrets.DEPLOY_HOST }}:8083/
+          curl -fsS -o /dev/null -w "API %{http_code}\n" http://${{ secrets.DEPLOY_HOST }}:4000/api/auth/login || true

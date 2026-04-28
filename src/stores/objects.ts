@@ -1,26 +1,22 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { SiteObject, ObjectStatus } from '@/types'
-
-const STORAGE_KEY = 'pc_objects'
-
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
-}
-
-function loadFromStorage(): SiteObject[] {
-  const raw = localStorage.getItem(STORAGE_KEY)
-  return raw ? JSON.parse(raw) as SiteObject[] : []
-}
-
-function saveToStorage(items: SiteObject[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
-}
+import { api } from '@/services/api'
 
 export const useObjectsStore = defineStore('objects', () => {
-  const objects = ref<SiteObject[]>(loadFromStorage())
+  const objects = ref<SiteObject[]>([])
+  const loading = ref(false)
 
   const activeObjects = computed(() => objects.value.filter(o => o.status === 'active'))
+
+  async function fetchAll() {
+    loading.value = true
+    try {
+      objects.value = await api.get<SiteObject[]>('/objects')
+    } finally {
+      loading.value = false
+    }
+  }
 
   function getById(id: string): SiteObject | undefined {
     return objects.value.find(o => o.id === id)
@@ -30,24 +26,22 @@ export const useObjectsStore = defineStore('objects', () => {
     return objects.value.filter(o => o.clientId === clientId)
   }
 
-  function add(data: Omit<SiteObject, 'id' | 'createdAt' | 'updatedAt'>) {
-    const now = new Date().toISOString()
-    const obj: SiteObject = { ...data, id: generateId(), createdAt: now, updatedAt: now }
-    objects.value.push(obj)
-    saveToStorage(objects.value)
+  async function add(data: Omit<SiteObject, 'id' | 'createdAt' | 'updatedAt'>) {
+    const obj = await api.post<SiteObject>('/objects', data)
+    objects.value.unshift(obj)
     return obj
   }
 
-  function update(id: string, data: Partial<SiteObject>) {
+  async function update(id: string, data: Partial<SiteObject>) {
+    const updated = await api.put<SiteObject>(`/objects/${id}`, data)
     const idx = objects.value.findIndex(o => o.id === id)
-    if (idx === -1) return
-    objects.value[idx] = { ...objects.value[idx], ...data, updatedAt: new Date().toISOString() }
-    saveToStorage(objects.value)
+    if (idx !== -1) objects.value[idx] = updated
+    return updated
   }
 
-  function remove(id: string) {
+  async function remove(id: string) {
+    await api.delete(`/objects/${id}`)
     objects.value = objects.value.filter(o => o.id !== id)
-    saveToStorage(objects.value)
   }
 
   function search(query: string, clientId?: string, status?: ObjectStatus): SiteObject[] {
@@ -62,5 +56,5 @@ export const useObjectsStore = defineStore('objects', () => {
     })
   }
 
-  return { objects, activeObjects, getById, getByClientId, add, update, remove, search }
+  return { objects, loading, activeObjects, getById, getByClientId, fetchAll, add, update, remove, search }
 })

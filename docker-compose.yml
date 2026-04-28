@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: pestcontrol
+      POSTGRES_USER: pestcontrol
+      POSTGRES_PASSWORD: pestcontrol
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U pestcontrol']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - '4000:4000'
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: pestcontrol
+      DB_PASS: pestcontrol
+      DB_NAME: pestcontrol
+      JWT_SECRET: pest-control-jwt-secret-prod-2024
+      NODE_ENV: development
+      UPLOAD_DIR: /data/uploads
+      PORT: 4000
+    volumes:
+      - uploads:/data/uploads
+
+volumes:
+  pgdata:
+  uploads:

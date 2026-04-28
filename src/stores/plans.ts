@@ -1,26 +1,22 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { ServicePlan } from '@/types'
-
-const STORAGE_KEY = 'pc_service_plans'
-
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
-}
-
-function load(): ServicePlan[] {
-  const raw = localStorage.getItem(STORAGE_KEY)
-  return raw ? JSON.parse(raw) as ServicePlan[] : []
-}
-
-function save(items: ServicePlan[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
-}
+import { api } from '@/services/api'
 
 export const usePlansStore = defineStore('plans', () => {
-  const plans = ref<ServicePlan[]>(load())
+  const plans = ref<ServicePlan[]>([])
+  const loading = ref(false)
 
   const activePlans = computed(() => plans.value.filter(p => p.status === 'active'))
+
+  async function fetchAll() {
+    loading.value = true
+    try {
+      plans.value = await api.get<ServicePlan[]>('/plans')
+    } finally {
+      loading.value = false
+    }
+  }
 
   function getById(id: string): ServicePlan | undefined {
     return plans.value.find(p => p.id === id)
@@ -34,24 +30,23 @@ export const usePlansStore = defineStore('plans', () => {
     return plans.value.filter(p => p.clientId === clientId)
   }
 
-  function add(data: Omit<ServicePlan, 'id' | 'createdAt'>): ServicePlan {
-    const plan: ServicePlan = { ...data, id: generateId(), createdAt: new Date().toISOString() }
-    plans.value.push(plan)
-    save(plans.value)
+  async function add(data: Omit<ServicePlan, 'id' | 'createdAt'>): Promise<ServicePlan> {
+    const plan = await api.post<ServicePlan>('/plans', data)
+    plans.value.unshift(plan)
     return plan
   }
 
-  function update(id: string, data: Partial<ServicePlan>) {
+  async function update(id: string, data: Partial<ServicePlan>) {
+    const updated = await api.put<ServicePlan>(`/plans/${id}`, data)
     const idx = plans.value.findIndex(p => p.id === id)
-    if (idx === -1) return
-    plans.value[idx] = { ...plans.value[idx], ...data }
-    save(plans.value)
+    if (idx !== -1) plans.value[idx] = updated
+    return updated
   }
 
-  function remove(id: string) {
+  async function remove(id: string) {
+    await api.delete(`/plans/${id}`)
     plans.value = plans.value.filter(p => p.id !== id)
-    save(plans.value)
   }
 
-  return { plans, activePlans, getById, getByObjectId, getByClientId, add, update, remove }
+  return { plans, loading, activePlans, getById, getByObjectId, getByClientId, fetchAll, add, update, remove }
 })
